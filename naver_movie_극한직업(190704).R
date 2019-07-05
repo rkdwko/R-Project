@@ -16,7 +16,6 @@ url_add <- "&page="
 url_ifr <- paste0(base_url,url2,url_add)
 pages <- 1:4652
 
-
 naver_movie <- data.frame(score=c(),review=c(),writer=c(),time=c())
 
 for (n in 1:length(pages)) {
@@ -55,3 +54,5 @@ for (n in 1:length(pages)) {
 
 View(naver_movie)
 naver_movie
+library(xlsx)
+write.xlsx(naver_movie,"naver_movie_극한직업.xlsx")
