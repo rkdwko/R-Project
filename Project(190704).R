@@ -4,17 +4,6 @@ library(stringr)
 library(dplyr)
 library(abind)
 
-install.packages('rJava')
-library(rJava)
-install.packages('KoNLP')
-library(KoNLP)
-install.packages('wordcloud')
-library(wordcloud)
-install.packages("RColorBrewer")
-library(RColorBrewer)
-library(xlsx)
-useSejongDic()
-
 trim <- function(x) gsub("^\\s+|\\s+$", "", x)
 
 base_url <- "https://movie.naver.com"
@@ -68,6 +57,13 @@ View(naver_movie)
 naver_movie
 library(xlsx)
 write.xlsx(naver_movie,"naver_movie_극한직업.xlsx")
+
+library(rJava)
+library(KoNLP)
+library(wordcloud)
+library(RColorBrewer)
+library(xlsx)
+useSejongDic()
 
 data1 <- readLines("naver_movie_극한직업.txt")
 data1    # 파일에서 읽은 Raw Data(한글 문장)
