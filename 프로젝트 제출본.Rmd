@@ -1,0 +1,226 @@
+---
+title: '190709'
+author: "LEE WOONG HEE"
+date: '2019 7 9 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###### 크롤링
+```{r}
+library(rvest)
+library(stringr)
+library(dplyr)
+library(abind)
+
+trim <- function(x) gsub("^\\s+|\\s+$", "", x)
+
+base_url <- "https://movie.naver.com"
+url_sub <- '/movie/bi/mi/point.nhn?code=167651'
+url <- paste0(base_url,url_sub)
+
+html <- read_html(url)
+
+url2 <- html %>% html_node('iframe.ifr') %>% html_attr('src')
+url_add <- "&page=" 
+url_ifr <- paste0(base_url,url2,url_add)
+pages <- 1:4652
+
+naver_movie <- data.frame(score=c(),review=c(),writer=c(),time=c())
+
+for (n in 1:length(pages)) {
+  
+  url_pages <- paste0(url_ifr,pages[n])
+  html2 <- read_html(url_pages)  
+  
+  lis <- html2 %>% html_node('div.score_result') %>% html_nodes('li') 
+  
+  score <- c()
+  review <- c()
+  writer <- c()
+  time <- c()
+  
+  for (li in lis) {
+    # score
+    score <- c(score,html_node(li,'.star_score') %>% html_text('em') %>% trim()) 
+    # review
+    tmp <- li %>% html_node('.score_reple') %>% html_text('p') %>% trim()
+    idx <- str_locate(tmp,'\r')
+    review <- c(review,str_sub(tmp,1,idx[1]-1))
+    # writer
+    tmp <- trim(str_sub(tmp,idx[1],-1))
+    idx <- str_locate(tmp,'\r')
+    writer <- c(writer,str_sub(tmp,1,idx[1]-1))
+    # time
+    tmp <- trim(str_sub(tmp,idx[1],-1))
+    idx <- str_locate(tmp,'\r')
+    time <- c(time,str_sub(tmp,1,idx[1]-1))
+
+  }
+  
+  movie <- data.frame(score=score,review=review,writer=writer,time=time)
+  naver_movie <- rbind.data.frame(naver_movie,movie)  
+  
+}
+
+View(naver_movie)
+naver_movie
+naver_movie <- read.csv("D:/Workspace/R-Project/naver_movie_극한직업(일자별 시간별 월별).csv",header=T)
+str(naver_movie)
+```
+<br><br>
+
+##### 월별 평점 분석 barplot
+```{r}
+library(ggplot2)
+library(gridExtra)
+data_movie <- naver_movie %>%
+  select(score, month, day, time)
+
+data_movie1 <- data_movie %>%
+  group_by(month) %>%
+  summarise(average=mean(score,na.rm=T))
+data_movie1
+
+ggplot(data_movie1,aes(x=month,y=average,fill=month)) +
+  geom_bar(stat="identity") +
+  xlab("월") + ylab("평균 평점") +
+  ggtitle("극한직업 월별 평균평점") +
+  theme(plot.title = element_text(color="black",size=15,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=10,face="bold"),
+        axis.title.y = element_text(color="black",size=10,face="bold"))
+```
+<br><br>
+
+###### 일자별 평점 분석 barplot
+```{r}
+data_movie2 <- data_movie %>%
+  group_by(day) %>%
+  summarise(average=mean(score,na.rm=T))
+data_movie2
+
+data_movie2_1 <- data_movie2 %>%
+  filter(day %in% c('2019.02.01','2019.02.02','2019.02.03','2019.02.04',
+                     '2019.02.05','2019.02.06','2019.02.07','2019.02.08'))
+
+data_movie2_2 <- data_movie2 %>%
+  filter(day %in% c('2019.03.01','2019.03.02','2019.03.03','2019.03.04',
+                     '2019.03.05','2019.03.06','2019.03.07','2019.03.08'))
+
+data_movie2_3 <- data_movie2 %>%
+  filter(day %in% c('2019.04.01','2019.04.02','2019.04.03','2019.04.04',
+                     '2019.04.05','2019.04.06','2019.04.07','2019.04.08'))
+
+data_movie2_4 <- data_movie2 %>%
+  filter(day %in% c('2019.05.01','2019.05.02','2019.05.03','2019.05.04',
+                     '2019.05.05','2019.05.06','2019.05.07','2019.05.08'))
+
+g1 <- ggplot(data_movie2_1,aes(x=day,y=average,fill=day)) +
+  geom_bar(stat="identity") +
+  xlab("일자") + ylab("평균 평점") +
+  ggtitle("극한직업 일자별 평균평점 1") +
+  theme(plot.title = element_text(color="black",size=12,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=9,face="bold"),
+        axis.title.y = element_text(color="black",size=9,face="bold"))
+
+g2 <- ggplot(data_movie2_2,aes(x=day,y=average,fill=day)) +
+  geom_bar(stat="identity") +
+  xlab("일자") + ylab("평균 평점") +
+  ggtitle("극한직업 일자별 평균평점 2") +
+  theme(plot.title = element_text(color="black",size=12,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=9,face="bold"),
+        axis.title.y = element_text(color="black",size=9,face="bold"))
+
+g3 <- ggplot(data_movie2_3,aes(x=day,y=average,fill=day)) +
+  geom_bar(stat="identity") +
+  xlab("일자") + ylab("평균 평점") +
+  ggtitle("극한직업 일자별 평균평점 3") +
+  theme(plot.title = element_text(color="black",size=12,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=9,face="bold"),
+        axis.title.y = element_text(color="black",size=9,face="bold"))
+
+g4 <- ggplot(data_movie2_4,aes(x=day,y=average,fill=day)) +
+  geom_bar(stat="identity") +
+  xlab("일자") + ylab("평균 평점") +
+  ggtitle("극한직업 일자별 평균평점 4") +
+  theme(plot.title = element_text(color="black",size=12,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=9,face="bold"),
+        axis.title.y = element_text(color="black",size=9,face="bold"))
+
+grid.arrange(g1,g2,g3,g4,nrow=2,ncol=2)
+```
+<br><br>
+
+###### 시간대별 평점 분석 barplot
+```{r}
+data_movie3 <- data_movie %>%
+  group_by(time) %>%
+  summarise(average=mean(score,na.rm=T))
+data_movie3
+
+ggplot(data_movie3,aes(x=time,y=average, fill=time)) +
+  geom_bar(stat='identity') +
+  xlab("시간대") + ylab("평균 평점") +
+  ggtitle("극한직업 시간대별 평균평점") +
+  theme(plot.title = element_text(color="black",size=15,face="bold.italic",hjust=0.5),
+        axis.title.x = element_text(color="black",size=10,face="bold"),
+        axis.title.y = element_text(color="black",size=10,face="bold"))
+```
+<br><br>
+
+###### 통계 분석
+```{r}
+qqnorm(naver_movie$score) ; qqline(naver_movie$score)  
+```
+<br><br>
+
+###### 등분산성 검정(월별)
+```{r}
+bartlett.test(score~month,data=naver_movie)
+```
+<br><br>
+
+###### anova(월별)
+```{r}
+anova(lm(score~month,data=naver_movie))
+```
+<br><br>
+
+###### kruskal.test(월별)
+```{r}
+kruskal.test(score~month,data=naver_movie)
+```
+<br><br>
+
+###### anova(일자별)
+```{r}
+anova(lm(score~day,data=naver_movie))
+```
+<br><br>
+
+###### kruskal.test(일자별)
+```{r}
+kruskal.test(score~day,data=naver_movie)
+```
+<br><br>
+
+###### 등분산성 검정(시간대별)
+```{r}
+bartlett.test(score~time,data=naver_movie)
+```
+<br><br>
+
+###### anova(시간대별)
+```{r}
+anova(lm(score~time,data=naver_movie))
+```
+<br><br>
+
+###### kruskal.test(시간대별)
+```{r}
+kruskal.test(score~time,data=naver_movie)
+```
+<br><br>

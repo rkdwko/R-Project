@@ -1,0 +1,65 @@
+---
+title: "190709 2"
+author: "LEE WOONG HEE"
+date: '2019 7 9 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###### wordcloud 
+###### 불필요한 명사 제거
+```{r}
+library(rJava)
+library(KoNLP)
+library(wordcloud)
+library(RColorBrewer)
+useSejongDic()
+
+review <- readLines("D:/Workspace/R-Project/naver_movie_극한직업.txt")
+review <- str_replace_all(review,"[A-z]","")
+review <- str_replace_all(review,"\\d","")
+review <- str_replace_all(review,"[:punct:]","")
+words <- sapply(review,extractNoun,USE.NAMES=F)
+head(unlist(words),50)
+
+words <- unlist(words)
+words <- gsub("^ㅎ","",words)
+words <- gsub("^ㅋ","",words)
+words <- gsub("조","",words)
+words <- gsub("라","",words)
+words <- gsub("척","",words)
+words <- gsub("들","",words)
+words <- gsub("참","",words)
+words <- gsub("반","",words)
+words <- gsub("참","",words)
+words <- gsub("점","",words)
+words <- gsub("들","",words)
+words <- gsub("여","",words)
+words <- gsub("진짜","",words)
+words <- gsub("하게","",words)
+words <- gsub("할인빋고","",words)
+words <- gsub("본거","",words)
+words <- gsub("할거거","",words)
+words <- gsub("안띠고","",words)
+words <- gsub("이것","",words)
+words <- gsub("라","",words)
+words <- gsub("분","",words)
+words <- gsub("반","",words)
+words <- gsub("여","",words)
+words <- Filter(function(x) {nchar(x)>=2}, words) 
+wordcount <- table(words)
+head(sort(wordcount,decreasing=T),50)
+```
+<br><br>
+
+###### 시각화
+```{r}
+palete <- brewer.pal(12,"Paired")
+par(mai=rep(0,4))
+wordcloud(names(wordcount),freq=wordcount,scale=c(7,0.45),rot.per=0.25,min.freq=31,
+          random.order=F,random.color=T,colors=palete)
+```
+<br><br>
